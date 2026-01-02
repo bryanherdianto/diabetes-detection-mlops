@@ -1,0 +1,31 @@
+services:
+  model-serving:
+    build:
+      context: .
+      dockerfile: Dockerfile.serving
+    ports:
+      - "8501:8501"
+      - "8500:8500"
+    environment:
+      - PORT=8501
+      - MODEL_NAME=serving_model
+      - MODEL_BASE_PATH=/models
+      - MONITORING_CONFIG=/model_config/prometheus.config
+
+  fastapi:
+    build:
+      context: .
+      dockerfile: Dockerfile.fastapi
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    depends_on:
+      - model-serving
