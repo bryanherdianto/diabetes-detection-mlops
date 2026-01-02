@@ -2,13 +2,24 @@ global:
   scrape_interval: 15s
   evaluation_interval: 15s
   external_labels:
-    monitor: "tf-serving-monitor"
+    monitor: "diabetes-monitor"
 
 scrape_configs:
-  - job_name: "prometheus"
-    scrape_interval: 5s 
-    metrics_path: /monitoring/prometheus/metrics 
+  - job_name: "fastapi-internal"
+    scrape_interval: 5s
+    metrics_path: /monitoring/prometheus/metrics
     static_configs:
-      # - targets: ['diabetes-detection-8a31c5bf0c49.herokuapp.com']
-      # - targets: ['model-serving:8501']
       - targets: ['fastapi:8080']
+
+  - job_name: "tf-serving-internal"
+    scrape_interval: 5s
+    metrics_path: /monitoring/prometheus/metrics
+    static_configs:
+      - targets: ['model-serving:8501']
+
+  - job_name: "render-public"
+    scheme: https
+    scrape_interval: 15s
+    metrics_path: /monitoring/prometheus/metrics
+    static_configs:
+      - targets: ['diabetes-detection-mlops.onrender.com']
