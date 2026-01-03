@@ -12,6 +12,20 @@
  <img src="https://img.shields.io/badge/Render-46E3B7?style=for-the-badge&logo=render&logoColor=white" />
 </p>
 
+## Problem
+
+Detecting the presence of diabetes in patients often requires manual checking, which can be inaccurate. Using machine learning algorithms, diabetes can be detected quickly and accurately by analyzing clinical features such as Body Mass Index (BMI), age, blood sugar levels, blood pressure, and other health factors.
+
+## Machine Learning Solution
+
+This project utilizes a classification model to predict whether a particular patient has diabetes or not.
+
+## Flowchart
+
+![Program Flowchart](https://i.imgur.com/9KpDbuF.png)  
+
+The pipeline begins when data or code is pushed to GitHub, which triggers the GitHub Actions workflow. The process initiates TFX components starting with ExampleGen for data ingestion, followed by StatisticsGen and SchemaGen, and then ExampleValidator for data validation. Next, Transform performs feature engineering before the Trainer handles model training and the Evaluator conducts a model performance check. At the decision point, if the model is not blessed, the pipeline stops; however, if it is blessed, the process proceeds to the Pusher to export model artifacts. The workflow then commits the new model to the repository and triggers the Render deploy hook to build and deploy the FastAPI Docker image. Finally, the model can also be monitored using Prometheus for performance metrics.
+
 ## Why TFX for MLOps
 
 This project uses TensorFlow Extended (TFX) instead of standard TensorFlow to implement a robust MLOps (Machine Learning Operations) workflow. TFX provides a production-ready framework that automates data validation, transformation, and model evaluation. Unlike a simple training script, TFX ensures that only models meeting specific performance thresholds are deployed, preventing model decay and ensuring data consistency across the entire lifecycle.
@@ -27,14 +41,6 @@ Once the model is blessed by the evaluator, it is automatically deployed to Rend
 ## Dataset
 
 [Diabetes Dataset](https://www.kaggle.com/datasets/lara311/diabetes-dataset-using-many-medical-metrics)
-
-## Problem
-
-Detecting the presence of diabetes in patients often requires manual checking, which can be inaccurate. Using machine learning algorithms, diabetes can be detected quickly and accurately by analyzing clinical features such as Body Mass Index (BMI), age, blood sugar levels, blood pressure, and other health factors.
-
-## Machine Learning Solution
-
-This project utilizes a classification model to predict whether a particular patient has diabetes or not.
 
 ## Data Processing Method
 
@@ -59,12 +65,8 @@ The model is expected to perform well in detecting diabetes in patients. It achi
 
 ## Web App
 
-Web app link for accessing model serving: [diabetes-detection-mlops](https://diabetes-detection-mlops.onrender.com/v1/models/serving_model:predict). Note: If the link is not working, the model may be in sleep mode due to inactivity on the free tier.
+Web app link for accessing model serving: [diabetes-detection-mlops](https://diabetes-detection-mlops.onrender.com/v1/models/serving_model:predict).
 
 ## Monitoring
 
 Model serving is monitored using Prometheus. Prometheus provides various metrics related to the FastAPI model serving, such as request counts and latency, allowing for real-time observability of the model's performance in production.
-
-## Additional Information
-
-To manage costs effectively, the Render app hosting this model may go to sleep after periods of inactivity. If you find that the model is currently offline, simply accessing the URL will wake it up.
