@@ -1,0 +1,41 @@
+name: Diabetes Detection MLOps Pipeline
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'data/**'
+      - 'modules/**'
+      - 'pipeline.py'
+
+jobs:
+  train-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.8'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Run TFX Pipeline
+        run: python pipeline.py
+
+      - name: Commit and Push New Model
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add output/serving_model/
+          git commit -m "Update model version [skip ci]" || echo "No changes to commit"
+          git push
+
+      - name: Trigger Render Deploy
+        if: success()
+        run: |
+          curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK }}
