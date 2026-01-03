@@ -2,12 +2,14 @@ import os
 
 os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
 
+import shutil
 from typing import Text
 from absl import logging
 from tfx.orchestration import metadata, pipeline
 from tfx.orchestration.beam.beam_dag_runner import BeamDagRunner
 from modules.components import init_components
 
+# Set pipeline name
 PIPELINE_NAME = "diabetes-pipeline"
 
 # Files for pipeline inputs
@@ -17,9 +19,9 @@ TRAINER_MODULE_FILE = "modules/diabetes_trainer.py"
 
 # Files for pipeline outputs
 OUTPUT_BASE = "output"
-serving_model_dir = os.path.join(OUTPUT_BASE, "serving_model")
-pipeline_root = os.path.join(OUTPUT_BASE, PIPELINE_NAME)
-metadata_path = os.path.join(pipeline_root, "metadata.sqlite")
+serving_model_dir = os.path.abspath(os.path.join(OUTPUT_BASE, "serving_model"))
+pipeline_root = os.path.abspath(os.path.join(OUTPUT_BASE, PIPELINE_NAME))
+metadata_path = os.path.abspath(os.path.join(pipeline_root, "metadata.sqlite"))
 
 
 def init_local_pipeline(components, pipeline_root: Text) -> pipeline.Pipeline:
@@ -28,6 +30,7 @@ def init_local_pipeline(components, pipeline_root: Text) -> pipeline.Pipeline:
         "--direct_running_mode=multi_processing",
         # auto-detect based on on the number of CPUs available during execution time.
         "--direct_num_workers=0",
+        "--no_pipeline_type_check",
     ]
 
     return pipeline.Pipeline(
@@ -55,3 +58,30 @@ components = init_components(
 
 pipeline = init_local_pipeline(components, pipeline_root)
 BeamDagRunner().run(pipeline=pipeline)
+
+# Get the latest pushed model from the internal TFX artifacts
+pusher_dir = os.path.join(pipeline_root, "Pusher", "pushed_model")
+latest_run = max([d for d in os.listdir(pusher_dir) if d.isdigit()], key=int)
+source_path = os.path.join(pusher_dir, latest_run)
+
+# The destination version folder created by the Pusher
+dest_versions = [d for d in os.listdir(serving_model_dir) if d.isdigit()]
+if dest_versions:
+    latest_version = max(dest_versions, key=int)
+    dest_path = os.path.join(serving_model_dir, latest_version)
+
+    print(f"Syncing variables from {source_path} to {dest_path}...")
+
+    # Copy the variables folder if it's missing
+    src_vars = os.path.join(source_path, "variables")
+    dst_vars = os.path.join(dest_path, "variables")
+
+    if os.path.exists(src_vars):
+        if os.path.exists(dst_vars):
+            shutil.rmtree(dst_vars)
+        shutil.copytree(src_vars, dst_vars)
+        print("Variables synced successfully!")
+    else:
+        print("Error: Source variables folder not found in Pusher artifacts.")
+else:
+    print("Error: No version folder found in serving_model_dir.")

@@ -2,3 +2,5 @@ tensorflow==2.7.0
 tfx==1.6.0
 attrs==20.3.0
 jsonschema==4.17.3
+numpy==1.23.5
+setuptools==69.5.1
